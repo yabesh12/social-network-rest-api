@@ -1,0 +1,52 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:14.0
+    restart: always
+    environment:
+      - POSTGRES_USER=SocialNetworkUser
+      - POSTGRES_PASSWORD=SocialNetworkPassword
+    volumes:
+      - social_network_db_data:/var/lib/postgresql/data
+    networks:
+      - social_network_backend_tier
+
+  redis:
+    image: redis:latest
+    restart: always
+    networks:
+      - social_network_backend_tier
+
+  social_network:
+    restart: always
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    expose:
+      - "8000"
+    depends_on:
+      - db
+    env_file: .env
+    environment:
+      - DJANGO_COLLECT_STATIC=off
+      - DJANGO_MANAGEPY_MIGRATE=off
+    links:
+      - db:postgres
+    networks:
+      - social_network_backend_tier
+
+
+volumes:
+  social_network_db_data:
+    driver: local
+  static_volume:
+    driver: local
+
+
+networks:
+  social_network_backend_tier:
+    driver: bridge
