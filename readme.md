@@ -1,22 +1,22 @@
-Social Network API
+### Social Network API
 
-To build docker
+## To build docker
 docker-compose build
 
-To run docker containers
+## To run docker containers
 docker-compose up
 
-To down the docker containers
+## To down the docker containers
 docker-compose down
 
-Necessary steps
+## Necessary steps :-
 docker-compose run social_network bash
 python manage.py makemigrations
 python manage.py migrate
 python manage.py createsuperuser
 
 
-List of endpoints:-
+## List of endpoints:-
 1. User Signup
 2. User Login
 3. User Search
