@@ -4,7 +4,9 @@ from rest_framework import status
 from apps.users.models import CustomUser, FriendRequest
 from rest_framework import generics, status
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import FriendRequestSerializer, UserListSerializer, UserSignupSerializer, UserLoginSerializer
+
+from rest_api.utils import rate_limit_friend_requests
+from .serializers import CustomUserSerializer, FriendRequestPendingSerializer, FriendRequestSerializer, UserListSerializer, UserSignupSerializer, UserLoginSerializer
 from rest_framework.views import APIView
 from django.core.paginator import Paginator, EmptyPage
 from rest_framework.decorators import api_view, permission_classes,authentication_classes
@@ -134,9 +136,12 @@ class FriendRequestView(APIView):
       with the friend request ID in the URL and the 'action' field set to 'accept'
       or 'reject'.
 
+    - To list the friends those who accepted the friend request
+
     Request Methods:
     - POST: Send a friend request
     - PATCH: Accept or reject a friend request
+    - GET: List the Friends
 
     Request Format:
     - POST Data:
@@ -156,7 +161,7 @@ class FriendRequestView(APIView):
     - 401 Unauthorized: User is not authenticated or has invalid tokens
     - 404 Not Found: Friend request with the given ID not found
     """
-
+    @rate_limit_friend_requests
     def post(self, request, *args, **kwargs):
         # Send friend request
         data = request.data
@@ -184,5 +189,34 @@ class FriendRequestView(APIView):
         else:
             return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({"message": f"Friend request {action}ed successfully"}, status=status.HTTP_200_OK)
+        serializer = FriendRequestSerializer(friendship_request)
+        return Response({"message": f"Friend request {action}ed successfully","data":serializer.data}, status=status.HTTP_200_OK)
 
+    def get(self, request, *args, **kwargs):
+        # Get the list of friends for the authenticated user
+        user_id = request.user.id
+        friends = FriendRequest.objects.filter(from_user=user_id, status='accepted')
+        # Serialize the user information for each friend
+        friend_list = []
+        for friend_request in friends:
+            friend_user = friend_request.to_user if friend_request.from_user.id == user_id else friend_request.from_user
+            friend_serializer = CustomUserSerializer(friend_user)
+            friend_list.append(friend_serializer.data)
+
+        return Response({"friends": friend_list}, status=status.HTTP_200_OK)
+
+
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+class FriendRequestPendingView(APIView):
+    """
+    List all the pending Friend Requests
+    """
+    def get(self, request, *args, **kwargs):
+        # Get the list of pending friend requests for the authenticated user
+        user_id = request.user.id
+        pending_requests = FriendRequest.objects.filter(from_user=user_id, status='pending')
+
+        # Serialize the pending friend requests
+        serializer = FriendRequestPendingSerializer(pending_requests, many=True)
+        return Response({"pending_requests": serializer.data}, status=status.HTTP_200_OK)

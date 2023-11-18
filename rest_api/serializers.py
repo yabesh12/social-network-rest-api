@@ -15,7 +15,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["username","email"]
+        fields = ["id","username","email"]
 
 
 
@@ -48,3 +48,13 @@ class FriendRequestSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         return FriendRequest.objects.create(**validated_data)
+
+
+
+class FriendRequestPendingSerializer(serializers.ModelSerializer):
+    from_user_data = CustomUserSerializer(source='from_user', read_only=True)
+    to_user_data = CustomUserSerializer(source='to_user', read_only=True)
+
+    class Meta:
+        model = FriendRequest
+        fields = ['id', 'from_user', 'to_user', 'status', 'created_at', 'updated_at', 'from_user_data', 'to_user_data']
