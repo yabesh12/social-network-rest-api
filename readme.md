@@ -10,10 +10,12 @@ docker-compose up
 docker-compose down
 
 ## Necessary steps :-
+'''
 docker-compose run social_network bash
 python manage.py makemigrations
 python manage.py migrate
 python manage.py createsuperuser
+'''
 
 
 ## List of endpoints:-
