@@ -2,13 +2,19 @@
 - ------------------------------------------------------
 
 ## To build docker
+```
 docker-compose build
+```
 
 ## To run docker containers
+```
 docker-compose up
+```
 
 ## To down the docker containers
+```
 docker-compose down
+```
 
 ## Necessary steps :-
 ```
